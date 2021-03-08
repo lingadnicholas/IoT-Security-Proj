@@ -113,7 +113,7 @@ void client_connect() {
         fprintf(stderr, "ERROR server rejected:%s\n", strerror(errno));
         exit(2);
     }
-
+    ssl_setup();
 
 }
 void closeall() {

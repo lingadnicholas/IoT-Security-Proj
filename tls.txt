@@ -1,0 +1,5 @@
+ID=752381964
+10:31:19 98.6
+LOG ID is not newline-terminated
+OFF
+10:31:19 SHUTDOWN
