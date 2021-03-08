@@ -90,7 +90,7 @@ void shutdownProgram() { //Printing time code from: https://www.techiedelight.co
     time(&rawtime);
     local = localtime(&rawtime);
     //Time format: hh:mm:ss
-    printf("%02d:%02d:%02d SHUTDOWN\n", local->tm_hour, local->tm_min, local->tm_sec);
+    dprintf(sockfd, "%02d:%02d:%02d SHUTDOWN\n", local->tm_hour, local->tm_min, local->tm_sec);
     if (fd != 1){
         dprintf(fd, "%02d:%02d:%02d SHUTDOWN\n", local->tm_hour, local->tm_min, local->tm_sec);
     }
@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
             time(&rawtime);
             local = localtime(&rawtime);
             float temp = convertTemp(mraa_aio_read(sensor));
-            printf("%02d:%02d:%02d %.1f\n", local->tm_hour, local->tm_min, local->tm_sec, temp);
+            dprintf(sockfd, "%02d:%02d:%02d %.1f\n", local->tm_hour, local->tm_min, local->tm_sec, temp);
             if (fd != 1) {
                 dprintf(fd, "%02d:%02d:%02d %.1f\n", local->tm_hour, local->tm_min, local->tm_sec, temp);
             }
