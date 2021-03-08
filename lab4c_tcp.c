@@ -55,7 +55,15 @@ int sockfd;
 //Code from disc 1b slides:
 void client_connect() {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        fprintf(stderr, "Error with socket\n");
+        exit(2);
+    }
     struct hostent *server = gethostbyname(host);
+    if (server == NULL) {
+        fprintf(stderr, "Error gethostbyname\n");
+        exit(2);
+    }
     memset(&serv_addr, 0, sizeof(struct sockaddr_in));
     serv_addr.sin_family = AF_INET;
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
