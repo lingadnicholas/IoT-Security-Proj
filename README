@@ -1,0 +1,19 @@
+NAME: Nicholas Lingad
+EMAIL: lingadnicholas@g.ucla.edu
+ID: 605284477
+
+lab4c_tcp.c:
+
+lab4c_tls.c:
+
+
+Makefile:
+    default: builds the executable ./lab4b from lab4b.c
+    clean: cleans all files not in the tar
+    dist: puts README, Makefile, smoketest.sh, lab4b.c into a tarball 
+
+Resources:
+
+http://www.cplusplus.com/reference/ctime/localtime/
+www.techiedelight.com/print-current-date-and-time-in-c/
+https://www.tutorialspoint.com/c_standard_library/c_function_difftime.htm
