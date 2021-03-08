@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
     
         if (pollInput.revents && POLLIN) {
             //Read input from STDIN
-            ret = read(0, buf, 256);
+            ret = read(sockfd, buf, 256);
             if (ret < 0) {
                 fprintf(stderr, "Read error:%s\n", strerror(errno));
                 exit(1);
