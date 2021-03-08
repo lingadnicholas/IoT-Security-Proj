@@ -15,13 +15,14 @@
 #include <time.h>
 #include <poll.h>
 #include <math.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <openssl/ssl.h>
 
 /*Following code is from the disc 1B slides!*/
 #ifdef DUMMY
-#define MRAA_GPIO_IN 0
-#define MRAA_GPIO_EDGE_RISING 0
 typedef int mraa_aio_context;
-typedef int mraa_gpio_context;
 
 //AIO Dummy Declarations
 mraa_aio_context mraa_aio_init(int p) {
@@ -34,22 +35,7 @@ void mraa_aio_close(mraa_aio_context c) {
     return;
 }
 
-//GPIO Dummy Functions
-mraa_gpio_context mraa_gpio_init(int p) {
-    return 1; // return fake device handler
-}
-void mraa_gpio_dir(mraa_gpio_context c, int d) {
-    return; //empty input/out register
-}
-int mraa_gpio_read(mraa_gpio_context c) {
-    return 0; //return fake button input 
-}
-void mraa_gpio_close(mraa_gpio_context c) {
-    return; 
-}
-void mraa_gpio_isr(mraa_gpio_context c, int mode, void(*p)(void*), void*args) {
-    return; 
-}
+
 #else
 #include <mraa.h>
 #include <mraa/aio.h>
@@ -61,23 +47,92 @@ int FAHRENHEIT = 1;
 int PERIOD = 1;
 int fd = 1; 
 int stop = 0;
-mraa_gpio_context button; 
 mraa_aio_context sensor;
+char* host = NULL;
+char* id = NULL;
+int port = -1;
+struct sockaddr_in serv_addr; 
+int sockfd;
+SSL* ssl; 
 
+void secure_write(char* output) {
+    if (SSL_write(ssl, output, strlen(output)) < 0) {
+        fprintf(stderr, "Error with SSL write\n");
+        exit(2);
+    }
+}
+//Code from 1b slides
+void ssl_setup() {
+    OpenSSL_add_all_algorithms();
+    if (SSL_library_init() < 0) {
+        fprintf(stderr, "Error initializing SSL library\n");
+        exit(2);
+    }
+    SSL_load_error_strings();
+    SSL_CTX *newContext = SSL_CTX_new(TLSv1_client_method());
+
+    //Attach SSL to a socket: 
+    ssl = SSL_new(newContext);
+    if (ssl == NULL) {
+        fprintf(stderr, "SSL_new error\n");
+        exit(2);
+    }
+    if (SSL_set_fd(ssl, sockfd) < 0) {
+        fprintf(stderr, "Unable to SSL_set_fd\n");
+        exit(2);
+    }
+    if (SSL_connect(ssl) < 0) {
+        fprintf(stderr, "Unable to SSL_connect\n");
+        exit(2);
+    }
+
+    //Immediately send (and log) an ID terminated with newline
+    char output[20]; 
+    sprintf(output, "ID=%s", id);
+    secure_write(output);
+    dprintf(fd, "ID=%s\n", id);
+}
+//Code from 1b slides
+void client_connect() {
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        fprintf(stderr, "Error with socket\n");
+        exit(2);
+    }
+    struct hostent *server = gethostbyname(host);
+    if (server == NULL) {
+        fprintf(stderr, "Error gethostbyname\n");
+        exit(2);
+    }
+    memset(&serv_addr, 0, sizeof(struct sockaddr_in));
+    serv_addr.sin_family = AF_INET;
+    memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
+    serv_addr.sin_port = htons(port);
+    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) 
+    {
+        fprintf(stderr, "ERROR server rejected:%s\n", strerror(errno));
+        exit(2);
+    }
+
+
+}
 void closeall() {
-    mraa_gpio_close(button);
     mraa_aio_close(sensor);
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
     close(fd);
     exit(0);
 }
 
-void shutdown() { //Printing time code from: https://www.techiedelight.com/print-current-date-and-time-in-c/
+void shutdownProgram() { //Printing time code from: https://www.techiedelight.com/print-current-date-and-time-in-c/
     struct tm* local;
     time_t rawtime;
     time(&rawtime);
     local = localtime(&rawtime);
     //Time format: hh:mm:ss
-    printf("%02d:%02d:%02d SHUTDOWN\n", local->tm_hour, local->tm_min, local->tm_sec);
+    char output[50];
+    sprintf(output, "%02d:%02d:%02d SHUTDOWN\n", local->tm_hour, local->tm_min, local->tm_sec);
+    secure_write(output);
     if (fd != 1){
         dprintf(fd, "%02d:%02d:%02d SHUTDOWN\n", local->tm_hour, local->tm_min, local->tm_sec);
     }
@@ -134,7 +189,7 @@ void doCommand(char* command) {
     }
     else if (strcmp(command, "OFF") == 0) 
     {
-        shutdown();
+        shutdownProgram();
     }
 }
 
@@ -147,12 +202,14 @@ int main(int argc, char* argv[]) {
 		{
 			{"period", required_argument, 0, 'p'},
 			{"scale", required_argument, 0, 's'},
+            {"id", required_argument, 0, 'i'},
+            {"host", required_argument, 0, 'h'},
             {"log", required_argument, 0, 'l'},
 			{0, 0, 0, 0}
 		};
 		/* getopt_long stores the option index here */ 
 		int option_index = 0;
-		c = getopt_long(argc, argv, "p:s:", long_options, &option_index);
+		c = getopt_long(argc, argv, "p:s:i:h:l:", long_options, &option_index);
         
 		/* Detect the end of options. */
 		if (c == -1)
@@ -176,6 +233,16 @@ int main(int argc, char* argv[]) {
                 if (*optarg == 'C')
                     FAHRENHEIT = 0;
 				break;
+            case 'i': ;
+                if (strlen(optarg) != 9) {
+                    fprintf(stderr, "--id length should be 9 characters.\n");
+                    exit(1);
+                }
+                id = optarg; 
+                break;
+            case 'h': ;
+                host = optarg; 
+                break;
             case 'l': ;
                 char *logfd = optarg;
                 if ((fd = creat(logfd, 0666)) < 0)
@@ -185,7 +252,7 @@ int main(int argc, char* argv[]) {
                 break;
 			case '?':
 				fprintf(stderr, 
-				"Correct usage: './lab4b [OPTIONS]' options: --scale=[C/F] --period=# --log=[filename]\n"); 
+				"Correct usage: './lab4b [OPTIONS] [PORT NUMBER]' options: --scale=[C/F] --period=# MANDATORY: --log=[filename] --id=[9 digit number] --host=[name or address]\n"); 
 				exit(1);
 				break;
 			default:
@@ -193,17 +260,22 @@ int main(int argc, char* argv[]) {
 		}
         
     }
-    //Initialize the button and sensor.
-   
-    button = mraa_gpio_init(60); //TODO: IF NOT USABLE, USE GPIO_115 ADDR 73
-    if (button == NULL) {
-        fprintf(stderr, "ERROR button is NULL\n");
+
+    //optind: https://linux.die.net/man/3/optind
+    if (optind < argc) {
+		int tempVal1;
+		if ((tempVal1 = atoi(argv[optind])) == 0 || tempVal1 < 0) {
+			fprintf(stderr, "Portnum should not be negative\n");
+			exit(1);
+        }
+        port = tempVal1;
+    }
+    if (fd == 1 || host == NULL || port == -1 || id == NULL ) {
+        fprintf(stderr, "Options --log=[filename] --id=[9 digit number] --host=[name or address] portnum are MANDATORY\n");
         exit(1);
     }
-    //On button press, we will print a final sample, and shutdown
-    //So button is IN
-    mraa_gpio_dir(button, MRAA_GPIO_IN);
-    
+    client_connect(); //Connect to server
+    //Initialize sensor.
    
     sensor = mraa_aio_init(1); 
     if (sensor == NULL) {
@@ -216,9 +288,8 @@ int main(int argc, char* argv[]) {
     char buf[256];
     char com[256];
     struct pollfd pollInput;
-    pollInput.fd = 0;
+    pollInput.fd = sockfd;
     pollInput.events = POLLIN | POLLHUP | POLLERR;
-    mraa_gpio_isr(button, MRAA_GPIO_EDGE_RISING, &shutdown, NULL);
     time_t lastLogTime;
     int first = 1;
     int index = 0; //Used bc we don't always read in all at once.
@@ -239,7 +310,9 @@ int main(int argc, char* argv[]) {
             time(&rawtime);
             local = localtime(&rawtime);
             float temp = convertTemp(mraa_aio_read(sensor));
-            printf("%02d:%02d:%02d %.1f\n", local->tm_hour, local->tm_min, local->tm_sec, temp);
+            char output[50];
+            sprintf(output, "%02d:%02d:%02d %.1f\n", local->tm_hour, local->tm_min, local->tm_sec, temp);
+            secure_write(output);
             if (fd != 1) {
                 dprintf(fd, "%02d:%02d:%02d %.1f\n", local->tm_hour, local->tm_min, local->tm_sec, temp);
             }
@@ -255,9 +328,9 @@ int main(int argc, char* argv[]) {
     
         if (pollInput.revents && POLLIN) {
             //Read input from STDIN
-            ret = read(0, buf, 256);
+            ret = SSL_read(ssl, buf, 256);
             if (ret < 0) {
-                fprintf(stderr, "Read error:%s\n", strerror(errno));
+                fprintf(stderr, "Read error\n");
                 exit(1);
             }
             int i;
@@ -278,7 +351,7 @@ int main(int argc, char* argv[]) {
 
         if (pollInput.revents & (POLLHUP | POLLERR)) {
             fprintf(stderr, "Error with poll of stdin\n");
-            exit(1);
+            exit(2);
         }
         
     }

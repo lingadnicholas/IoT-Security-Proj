@@ -5,10 +5,10 @@
 default: 
 	if uname -a | grep -q "armv7l"; then \
 		gcc -Wall -Wextra -lmraa -lm -o lab4c_tcp lab4c_tcp.c; \
-		gcc -Wall -Wextra -lmraa -lm -o lab4c_tls lab4c_tls.c; \
+		gcc -Wall -Wextra -lmraa -lm -lssl -lcrypto -o lab4c_tls lab4c_tls.c; \
 	else \
 		gcc -Wall -Wextra -DDUMMY -lm -o lab4c_tcp lab4c_tcp.c; \
-		gcc -Wall -Wextra -DDUMMY -lm -o lab4c_tls lab4c_tls.c; \
+		gcc -Wall -Wextra -DDUMMY -lm -lssl -lcrypto -o lab4c_tls lab4c_tls.c; \
 	fi 
 
 clean:
