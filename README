@@ -3,14 +3,21 @@ EMAIL: lingadnicholas@g.ucla.edu
 ID: 605284477
 
 lab4c_tcp.c:
-
+    C source file that reads temperature and outputs to log file/TCP server
+        Stopped either by ending program, OFF command
+        Accepts commands from server that allow to change the temperature scale, pause/start, shut off, or log
+            while the program is running.
 lab4c_tls.c:
-
+    C source file that reads temperature and outputs to log file/secure TLS server
+        Stopped either by ending program, OFF command
+        Accepts commands from server that allow to change the temperature scale, pause/start, shut off, or log
+            while the program is running.
+    Encrypts all communication, unlike tcp
 
 Makefile:
-    default: builds the executable ./lab4b from lab4b.c
+    default: builds the executable ./lab4c_tcp from lab4c_tcp.c and ./lab4c_tls from lab4c_tls.c
     clean: cleans all files not in the tar
-    dist: puts README, Makefile, smoketest.sh, lab4b.c into a tarball 
+    dist: puts README, Makefile, lab4c_tcp.c, lab4c_tls.c into a tarball 
 
 Resources:
 

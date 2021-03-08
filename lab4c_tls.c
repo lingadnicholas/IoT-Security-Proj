@@ -88,7 +88,7 @@ void ssl_setup() {
 
     //Immediately send (and log) an ID terminated with newline
     char output[20]; 
-    sprintf(output, "ID=%s", id);
+    sprintf(output, "ID=%s\n", id);
     secure_write(output);
     dprintf(fd, "ID=%s\n", id);
 }
