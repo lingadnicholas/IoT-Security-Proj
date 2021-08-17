@@ -1,7 +1,3 @@
-/* NAME: NICHOLAS LINGAD
- * EMAIL: lingadnicholas@g.ucla.edu
- * ID: 605284477
- */
 
 #include <string.h>
 #include <errno.h>
@@ -20,7 +16,6 @@
 #include <netdb.h>
 #include <openssl/ssl.h>
 
-/*Following code is from the disc 1B slides!*/
 #ifdef DUMMY
 typedef int mraa_aio_context;
 
