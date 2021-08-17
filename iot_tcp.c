@@ -14,7 +14,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-/*Following code is from the disc 1B slides!*/
 #ifdef DUMMY
 typedef int mraa_aio_context;
 
