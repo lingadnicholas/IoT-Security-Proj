@@ -11,9 +11,9 @@ iot_tls.c:
     Encrypts all communication, unlike tcp
 
 Makefile:
-    default: builds the executable ./lab4c_tcp from lab4c_tcp.c and ./lab4c_tls from lab4c_tls.c
+    default: builds the executable ./iot_tcp from iot_tcp.c and ./iot_tls from iot_tls.c
     clean: cleans all files not in the tar
-    dist: puts README, Makefile, lab4c_tcp.c, lab4c_tls.c into a tarball 
+    dist: puts README, Makefile, iot_tcp.c, iot_tls.c into a tarball 
 
 Resources:
 
