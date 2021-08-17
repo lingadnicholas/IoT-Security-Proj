@@ -11,7 +11,6 @@
 #include <poll.h>
 #include <math.h>
 
-/*Following code is from the disc 1B slides!*/
 #ifdef DUMMY
 #define MRAA_GPIO_IN 0
 #define MRAA_GPIO_EDGE_RISING 0
