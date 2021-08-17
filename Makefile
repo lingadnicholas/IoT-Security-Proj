@@ -1,6 +1,3 @@
-#Name: Nicholas Lingad
-#Email: lingadnicholas@g.ucla.edu
-#ID: 605284477
 
 default: 
 	if uname -a | grep -q "armv7l"; then \
