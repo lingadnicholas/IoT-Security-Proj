@@ -1,7 +1,3 @@
-/* NAME: NICHOLAS LINGAD
- * EMAIL: lingadnicholas@g.ucla.edu
- * ID: 605284477
- */
 
 #include <string.h>
 #include <errno.h>
