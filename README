@@ -1,9 +1,9 @@
-lab4c_tcp.c:
+iot_tcp.c:
     C source file that reads temperature and outputs to log file/TCP server
         Stopped either by ending program, OFF command
         Accepts commands from server that allow to change the temperature scale, pause/start, shut off, or log
             while the program is running.
-lab4c_tls.c:
+iot_tls.c:
     C source file that reads temperature and outputs to log file/secure TLS server
         Stopped either by ending program, OFF command
         Accepts commands from server that allow to change the temperature scale, pause/start, shut off, or log
