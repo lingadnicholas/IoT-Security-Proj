@@ -1,7 +1,3 @@
-NAME: Nicholas Lingad
-EMAIL: lingadnicholas@g.ucla.edu
-ID: 605284477
-
 lab4c_tcp.c:
     C source file that reads temperature and outputs to log file/TCP server
         Stopped either by ending program, OFF command
